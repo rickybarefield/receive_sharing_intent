@@ -7,6 +7,16 @@ Check the provided example for more info.
 
 ![Alt Text](./example/demo.gif)
 
+# About this branch
+
+This branch allows additional data to be shared, namely EXTRA_SUBJECT (which is the title associated with a webpage).
+
+This is achieved by sending a map rather than a simple string, it is therefore a breaking change.
+
+## TODO 
+
+    * Update iOS code to do the same
+    * Consider how to make this backwardly compatible
 
 # Usage
 

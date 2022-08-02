@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:receive_sharing_intent/Message.dart';
 
 class ReceiveSharingIntent {
   static const MethodChannel _mChannel =
@@ -12,7 +13,7 @@ class ReceiveSharingIntent {
   const EventChannel("receive_sharing_intent/events-text");
 
   static Stream<List<SharedMediaFile>>? _streamMedia;
-  static Stream<String>? _streamLink;
+  static Stream<Message>? _streamLink;
 
   /// Returns a [Future], which completes to one of the following:
   ///
@@ -34,19 +35,12 @@ class ReceiveSharingIntent {
   ///
   ///   * the initially stored link (possibly null), on successful invocation;
   ///   * a [PlatformException], if the invocation failed in the platform plugin.
-  static Future<String?> getInitialText() async {
-    return await _mChannel.invokeMethod('getInitialText');
-  }
+  static Future<Message?> getInitialText() async {
+    final initialText = await _mChannel.invokeMethod('getInitialText');
 
-  /// A convenience method that returns the initially stored link
-  /// as a new [Uri] object.
-  ///
-  /// If the link is not valid as a URI or URI reference,
-  /// a [FormatException] is thrown.
-  static Future<Uri?> getInitialTextAsUri() async {
-    final data = await getInitialText();
-    if (data == null) return null;
-    return Uri.parse(data);
+    return initialText == null
+        ? null
+        : Message.fromMap(initialText);
   }
 
   /// Sets up a broadcast stream for receiving incoming media share change events.
@@ -104,30 +98,13 @@ class ReceiveSharingIntent {
   ///
   /// If the app was started by a link intent or user activity the stream will
   /// not emit that initial one - query either the `getInitialText` instead.
-  static Stream<String> getTextStream() {
+  static Stream<Message> getTextStream() {
     if (_streamLink == null) {
-      _streamLink = _eChannelLink.receiveBroadcastStream("text").cast<String>();
+      _streamLink = _eChannelLink.receiveBroadcastStream("text")
+          .cast<Map<Object?, Object?>>()
+          .map(Message.fromMap);
     }
     return _streamLink!;
-  }
-
-  /// A convenience transformation of the stream to a `Stream<Uri>`.
-  ///
-  /// If the value is not valid as a URI or URI reference,
-  /// a [FormatException] is thrown.
-  ///
-  /// Refer to `getTextStream` about error/exception details.
-  ///
-  /// If the app was started by a share intent or user activity the stream will
-  /// not emit that initial uri - query either the `getInitialTextAsUri` instead.
-  static Stream<Uri> getTextStreamAsUri() {
-    return getTextStream().transform<Uri>(
-      new StreamTransformer<String, Uri>.fromHandlers(
-        handleData: (String data, EventSink<Uri> sink) {
-          sink.add(Uri.parse(data));
-        },
-      ),
-    );
   }
 
   /// Call this method if you already consumed the callback

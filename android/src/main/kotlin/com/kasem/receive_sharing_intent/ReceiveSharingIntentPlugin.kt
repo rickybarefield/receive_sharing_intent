@@ -34,8 +34,8 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
     private var initialMedia: JSONArray? = null
     private var latestMedia: JSONArray? = null
 
-    private var initialText: String? = null
-    private var latestText: String? = null
+    private var initialText: Message? = null
+    private var latestText: Message? = null
 
     private var eventSinkMedia: EventChannel.EventSink? = null
     private var eventSinkText: EventChannel.EventSink? = null
@@ -98,7 +98,7 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "getInitialMedia" -> result.success(initialMedia?.toString())
-            "getInitialText" -> result.success(initialText)
+            "getInitialText" -> result.success(initialText?.asHashMap())
             "reset" -> {
                 initialMedia = null
                 latestMedia = null
@@ -124,15 +124,16 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
             (intent.type == null || intent.type?.startsWith("text") == true)
                     && intent.action == Intent.ACTION_SEND -> { // Sharing text
                 val value = intent.getStringExtra(Intent.EXTRA_TEXT)
-                if (initial) initialText = value
-                latestText = value
-                eventSinkText?.success(latestText)
+                val title = intent.getStringExtra(Intent.EXTRA_SUBJECT)
+                if (initial) initialText = Message(value, title)
+                latestText = Message(value, title)
+                eventSinkText?.success(latestText?.asHashMap())
             }
             intent.action == Intent.ACTION_VIEW -> { // Opening URL
                 val value = intent.dataString
-                if (initial) initialText = value
-                latestText = value
-                eventSinkText?.success(latestText)
+                if (initial) initialText = Message(value, null)
+                latestText = Message(value, null)
+                eventSinkText?.success(latestText?.asHashMap())
             }
         }
     }
