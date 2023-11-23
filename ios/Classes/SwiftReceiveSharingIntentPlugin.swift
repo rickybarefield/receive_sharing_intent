@@ -162,27 +162,35 @@ public class SwiftReceiveSharingIntentPlugin: NSObject, FlutterPlugin, FlutterSt
                     }
                     eventSinkMedia?(toJson(data: latestMedia))
                 }
-            } else if url.fragment == "text" {
+            } else if url.fragment == "text" || url.fragment == "url" {
                 if let key = url.host?.components(separatedBy: "=").last,
                     let sharedArray = userDefaults?.object(forKey: key) as? [String] {
                     latestText =  sharedArray.joined(separator: ",")
                     if(setInitialData) {
                         initialText = latestText
                     }
-                    eventSinkText?(latestText)
+                    eventSinkText?(textAsDictionary())
                 }
             } else {
                 latestText = url.absoluteString
                 if(setInitialData) {
                     initialText = latestText
                 }
-                eventSinkText?(latestText)
+                eventSinkText?(textAsDictionary())
             }
             return true
         }
         latestMedia = nil
         latestText = nil
         return false
+    }
+    
+    private func textAsDictionary() -> Dictionary<String, String?> {
+        
+        return [
+            "text": latestText,
+            "subject": ""
+        ]
     }
     
     
